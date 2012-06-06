@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	//"strings"
-	//"path/filepath"
+	"path/filepath"
 	"os"
+	//"net/http/httputil"
+	//"mime/multipart"
 )
 
 var G_COUNT = 0
@@ -29,20 +31,46 @@ func UploadHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Printf("\nReceive %d request\n\n", G_COUNT)
 	G_COUNT++
 
+
+	for k, vs := range req.Header{
+		var values string
+		for _, v := range vs{
+			values += v
+			values += "##"
+		}//emacs go mode bug????
+		fmt.Printf("%s:%s\n", k, values)
+
+	}
+
+	formFile, fh, err := req.FormFile("Filedata")
+	if err != nil{
+		log.Println("FileData, ERR", err)
+	}
+	log.Println("FileName =", fh.Filename )
+
+
+	// _, err := httputil.DumpRequest(req, true)
+	// if err != nil{
+	// 	log.Println("ERR=", err)
+	// 	return
+	// }
+
+	//log.Println(string(bytes))
+	
 	//join the filename to the upload dir
-	// saveToFilePath := filepath.Join("d:/TMP", saveToFilename)
+	saveToFilePath := filepath.Join("d:/TMP", fh.Filename)
 
-	// osFile, err := os.Create(saveToFilePath)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// defer osFile.Close()
+	osFile, err := os.Create(saveToFilePath)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer osFile.Close()
 
-	// count, err := io.Copy(osFile, formFile)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// fmt.Printf("ALLOW: %s SAVE: %s (%d)\n", req.RemoteAddr, saveToFilename, count)
+	count, err := io.Copy(osFile, formFile)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Printf("ALLOW: %s SAVE: %s (%d)\n", req.RemoteAddr, fh.Filename, count)
 	w.Write([]byte("Upload Complete for"))
 }
 
